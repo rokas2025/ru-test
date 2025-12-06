@@ -10,6 +10,34 @@ function App() {
     script.type = 'text/javascript'
     document.body.appendChild(script)
 
+    // Try to hide branding after widget loads
+    const hideBranding = () => {
+      const widget = document.querySelector('elevenlabs-convai')
+      if (widget && widget.shadowRoot) {
+        const style = document.createElement('style')
+        style.textContent = `
+          [class*="powered" i],
+          [class*="branding" i],
+          [class*="attribution" i],
+          div:has(> a[href*="elevenlabs"]) {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            opacity: 0 !important;
+          }
+        `
+        widget.shadowRoot.appendChild(style)
+      }
+    }
+
+    // Try multiple times as widget might load asynchronously
+    script.onload = () => {
+      setTimeout(hideBranding, 100)
+      setTimeout(hideBranding, 500)
+      setTimeout(hideBranding, 1000)
+      setTimeout(hideBranding, 2000)
+    }
+
     return () => {
       // Cleanup script on unmount
       if (document.body.contains(script)) {
