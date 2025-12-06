@@ -1,119 +1,45 @@
-import { useState } from 'react'
-import { useConversation } from '@elevenlabs/react'
+import { useEffect } from 'react'
 import './App.css'
 
 function App() {
-  const [status, setStatus] = useState('')
-  const [error, setError] = useState('')
+  useEffect(() => {
+    // Load the ElevenLabs widget script
+    const script = document.createElement('script')
+    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
+    script.async = true
+    script.type = 'text/javascript'
+    document.body.appendChild(script)
 
-  const conversation = useConversation({
-    config: {
-      serverUrl: 'wss://api.eu.elevenlabs.io',
-    },
-    onConnect: () => {
-      setStatus('🎉 Connected to agent!')
-      setError('')
-    },
-    onDisconnect: () => {
-      setStatus('Disconnected')
-    },
-    onError: (err) => {
-      setError(err.message || 'An error occurred')
-      setStatus('')
-    },
-  })
-
-  const startConversation = async () => {
-    try {
-      setError('')
-      setStatus('🎤 Requesting microphone access...')
-
-      // Request microphone permission
-      await navigator.mediaDevices.getUserMedia({ audio: true })
-
-      setStatus('🚀 Starting conversation with EU server...')
-
-      // Start session with EU residency and your agent ID
-      await conversation.startSession({
-        agentId: 'agent_5601kbte4hqgfy2vat22eerajvts',
-        config: {
-          serverUrl: 'wss://api.eu.elevenlabs.io',
-        },
-      })
-
-      setStatus('✅ Connected! You can speak now...')
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to start conversation'
-      setError('❌ ' + errorMessage)
-      setStatus('')
-      console.error('Error starting conversation:', err)
+    return () => {
+      // Cleanup script on unmount
+      if (document.body.contains(script)) {
+        document.body.removeChild(script)
+      }
     }
-  }
-
-  const stopConversation = async () => {
-    try {
-      await conversation.endSession()
-      setStatus('👋 Conversation ended')
-    } catch (err) {
-      console.error('Error ending conversation:', err)
-    }
-  }
-
-  const isActive = conversation.status === 'connected'
-  const isConnecting = conversation.status === 'connecting'
+  }, [])
 
   return (
     <div className="container">
       <div className="card">
-        {/* Header */}
         <div className="header">
           <h1 className="title">Wemods Test Agent</h1>
           <p className="subtitle">AI-powered voice assistant</p>
         </div>
 
-        {/* Status Display */}
-        {(status || error) && (
-          <div className={`status ${error ? 'error' : 'info'}`}>
-            {error || status}
-          </div>
-        )}
-
-        {/* Active Indicator */}
-        {isActive && (
-          <div className="active-indicator">
-            <div className="pulse"></div>
-            <span className="active-text">🎙️ Listening...</span>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="button-container">
-          {!isActive ? (
-            <button
-              onClick={startConversation}
-              disabled={isConnecting}
-              className={`btn ${isConnecting ? 'btn-disabled' : 'btn-primary'}`}
-            >
-              {isConnecting ? (
-                <>
-                  <span className="spinner"></span>
-                  Connecting...
-                </>
-              ) : (
-                '🎤 Start Talking with Agent'
-              )}
-            </button>
-          ) : (
-            <button onClick={stopConversation} className="btn btn-danger">
-              ⏹️ End Conversation
-            </button>
-          )}
+        <div className="widget-info">
+          <p className="info-text">👇 Click the widget button below to start talking</p>
+          <p className="info-subtext">The conversational AI widget will appear in the bottom-right corner</p>
         </div>
 
-        {/* Info Footer */}
+        {/* ElevenLabs Conversational AI Widget with EU residency */}
+        <elevenlabs-convai 
+          agent-id="agent_5601kbte4hqgfy2vat22eerajvts" 
+          server-location="eu-residency"
+        ></elevenlabs-convai>
+
         <div className="footer">
-          <p>Click the button to start a voice conversation</p>
-          <p>Microphone access is required</p>
+          <p>Click the circular button in the bottom-right</p>
+          <p>Microphone access will be requested when you start</p>
         </div>
       </div>
     </div>
@@ -121,4 +47,3 @@ function App() {
 }
 
 export default App
-

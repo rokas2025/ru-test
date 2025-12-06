@@ -151,6 +151,26 @@
   animation: spin 0.8s linear infinite;
 }
 
+.widget-info {
+  text-align: center;
+  padding: 24px 16px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
+  border-radius: 16px;
+  border: 2px solid #93c5fd;
+}
+
+.info-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 8px;
+}
+
+.info-subtext {
+  font-size: 14px;
+  color: #64748b;
+}
+
 .footer {
   text-align: center;
   color: #64748b;
