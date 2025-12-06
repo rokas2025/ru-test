@@ -96,25 +96,31 @@ function App() {
 
   const setupAudioProcessing = (ws, stream) => {
     try {
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
+      // Create AudioContext with 16kHz sample rate (required by ElevenLabs)
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 })
       const audioContext = audioContextRef.current
       const source = audioContext.createMediaStreamSource(stream)
-      const processor = audioContext.createScriptProcessor(4096, 1, 1)
+      const processor = audioContext.createScriptProcessor(2048, 1, 1)
 
       source.connect(processor)
       processor.connect(audioContext.destination)
 
+      console.log('Audio setup: sample rate =', audioContext.sampleRate, 'Hz')
+
       processor.onaudioprocess = (e) => {
         if (ws.readyState === WebSocket.OPEN) {
           const audioData = e.inputBuffer.getChannelData(0)
-          // Convert to 16-bit PCM
+          
+          // Convert float32 audio to 16-bit PCM
           const pcmData = new Int16Array(audioData.length)
           for (let i = 0; i < audioData.length; i++) {
-            pcmData[i] = Math.max(-32768, Math.min(32767, audioData[i] * 32768))
+            const s = Math.max(-1, Math.min(1, audioData[i]))
+            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
           }
           
           // Convert PCM to base64
-          const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcmData.buffer)))
+          const bytes = new Uint8Array(pcmData.buffer)
+          const base64Audio = btoa(String.fromCharCode.apply(null, bytes))
           
           // Send as JSON message per ElevenLabs WebSocket API spec
           ws.send(JSON.stringify({
