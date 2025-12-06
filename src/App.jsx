@@ -39,12 +39,9 @@ function App() {
       ws.onopen = () => {
         console.log('WebSocket connected to EU endpoint!')
         
-        // Send authentication
-        ws.send(JSON.stringify({
-          type: 'auth',
-          api_key: apiKey,
-        }))
-
+        // No need to send auth - agent_id is in URL and auth happens automatically
+        // Just wait for conversation_initiation_metadata
+        
         setStatus('✅ Connected! You can speak now...')
         setIsActive(true)
         setIsConnecting(false)
