@@ -1,73 +1,117 @@
-import { useEffect } from 'react'
+import { useState } from 'react'
+import { useConversation } from '@elevenlabs/react'
 import './App.css'
 
 function App() {
-  useEffect(() => {
-    // Load the ElevenLabs widget script
-    const script = document.createElement('script')
-    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
-    script.async = true
-    script.type = 'text/javascript'
-    document.body.appendChild(script)
+  const [status, setStatus] = useState('')
+  const [error, setError] = useState('')
 
-    // Try to hide branding after widget loads
-    const hideBranding = () => {
-      const widget = document.querySelector('elevenlabs-convai')
-      if (widget && widget.shadowRoot) {
-        const style = document.createElement('style')
-        style.textContent = `
-          [class*="powered" i],
-          [class*="branding" i],
-          [class*="attribution" i],
-          div:has(> a[href*="elevenlabs"]) {
-            display: none !important;
-            visibility: hidden !important;
-            height: 0 !important;
-            opacity: 0 !important;
-          }
-        `
-        widget.shadowRoot.appendChild(style)
-      }
-    }
+  const conversation = useConversation({
+    onConnect: () => {
+      setStatus('🎉 Connected to agent!')
+      setError('')
+    },
+    onDisconnect: () => {
+      setStatus('Disconnected')
+    },
+    onError: (err) => {
+      setError(err.message || 'An error occurred')
+      setStatus('')
+    },
+    onMessage: (message) => {
+      console.log('Message:', message)
+    },
+  })
 
-    // Try multiple times as widget might load asynchronously
-    script.onload = () => {
-      setTimeout(hideBranding, 100)
-      setTimeout(hideBranding, 500)
-      setTimeout(hideBranding, 1000)
-      setTimeout(hideBranding, 2000)
-    }
+  const startConversation = async () => {
+    try {
+      setError('')
+      setStatus('🎤 Requesting microphone access...')
 
-    return () => {
-      // Cleanup script on unmount
-      if (document.body.contains(script)) {
-        document.body.removeChild(script)
-      }
+      // Request microphone permission
+      await navigator.mediaDevices.getUserMedia({ audio: true })
+
+      setStatus('🚀 Connecting to EU server...')
+
+      // Start session with EU residency configuration
+      await conversation.startSession({
+        agentId: 'agent_5601kbte4hqgfy2vat22eerajvts',
+        serverLocation: 'eu-residency',
+      })
+
+      setStatus('✅ Connected! You can speak now...')
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to start conversation'
+      setError('❌ ' + errorMessage)
+      setStatus('')
+      console.error('Error starting conversation:', err)
     }
-  }, [])
+  }
+
+  const stopConversation = async () => {
+    try {
+      await conversation.endSession()
+      setStatus('👋 Conversation ended')
+    } catch (err) {
+      console.error('Error ending conversation:', err)
+    }
+  }
+
+  const isActive = conversation.status === 'connected'
+  const isConnecting = conversation.status === 'connecting'
 
   return (
     <div className="container">
       <div className="card">
+        {/* Header */}
         <div className="header">
           <h1 className="title">Wemods Test Agent</h1>
           <p className="subtitle">AI-powered voice assistant</p>
         </div>
 
-        <div className="widget-info">
-          <p className="info-text">👇 Click the widget button below to start talking</p>
-          <p className="info-subtext">The conversational AI widget will appear in the bottom-right corner</p>
+        {/* Status Display */}
+        {(status || error) && (
+          <div className={`status ${error ? 'error' : 'info'}`}>
+            {error || status}
+          </div>
+        )}
+
+        {/* Active Indicator */}
+        {isActive && (
+          <div className="active-indicator">
+            <div className="pulse"></div>
+            <span className="active-text">🎙️ Listening...</span>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="button-container">
+          {!isActive ? (
+            <button
+              onClick={startConversation}
+              disabled={isConnecting}
+              className={`btn ${isConnecting ? 'btn-disabled' : 'btn-primary'}`}
+            >
+              {isConnecting ? (
+                <>
+                  <span className="spinner"></span>
+                  Connecting...
+                </>
+              ) : (
+                '🎤 Start Talking with Agent'
+              )}
+            </button>
+          ) : (
+            <button onClick={stopConversation} className="btn btn-danger">
+              ⏹️ End Conversation
+            </button>
+          )}
         </div>
 
-        {/* ElevenLabs Conversational AI Widget with EU residency */}
-        <elevenlabs-convai 
-          agent-id="agent_5601kbte4hqgfy2vat22eerajvts" 
-          server-location="eu-residency"
-        ></elevenlabs-convai>
-
+        {/* Info Footer */}
         <div className="footer">
-          <p>Click the circular button in the bottom-right</p>
-          <p>Microphone access will be requested when you start</p>
+          <p>Click the button to start a voice conversation</p>
+          <p>Microphone access is required</p>
         </div>
       </div>
     </div>
