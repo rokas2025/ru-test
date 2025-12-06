@@ -65,6 +65,17 @@ Then add your API key in Vercel dashboard → Project Settings → Environment V
 - **Agent ID:** `agent_5601kbte4hqgfy2vat22eerajvts`
 - **Server Location:** EU Residency (`eu-residency`)
 - **Knowledge Base & Instructions:** Managed in ElevenLabs UI
+- **Widget Implementation:** Using `@elevenlabs/convai-widget-embed` for native EU support
+
+### Updating Agent Settings
+
+To modify your agent's behavior, knowledge base, or instructions:
+1. Go to [ElevenLabs Dashboard](https://elevenlabs.io/app)
+2. Navigate to your agent settings
+3. Make your changes (knowledge base, instructions, voice settings, etc.)
+4. Changes take effect immediately - **no code deployment needed!**
+
+The widget automatically connects to your latest agent configuration.
 
 ## 🛠️ Tech Stack
 
