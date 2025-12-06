@@ -1,0 +1,5 @@
+# ElevenLabs API Configuration
+# Get your API key from: https://elevenlabs.io/app/settings/api-keys
+# IMPORTANT: Use the EU API key for EU residency compliance
+NEXT_PUBLIC_ELEVENLABS_API_KEY=your_elevenlabs_eu_api_key_here
+
