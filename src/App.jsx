@@ -107,26 +107,61 @@ function App() {
 
       console.log('Audio setup: sample rate =', audioContext.sampleRate, 'Hz')
 
+      let silenceFrames = 0
+      let isSpeaking = false
+
       processor.onaudioprocess = (e) => {
         if (ws.readyState === WebSocket.OPEN) {
           const audioData = e.inputBuffer.getChannelData(0)
           
-          // Convert float32 audio to 16-bit PCM
-          const pcmData = new Int16Array(audioData.length)
+          // Calculate RMS (volume level) for simple VAD
+          let sum = 0
           for (let i = 0; i < audioData.length; i++) {
-            const s = Math.max(-1, Math.min(1, audioData[i]))
-            pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
+            sum += audioData[i] * audioData[i]
+          }
+          const rms = Math.sqrt(sum / audioData.length)
+          const isSilent = rms < 0.01  // Silence threshold
+          
+          // Track speaking state
+          if (!isSilent) {
+            silenceFrames = 0
+            if (!isSpeaking) {
+              isSpeaking = true
+              console.log('🎤 Started speaking')
+            }
+          } else if (isSpeaking) {
+            silenceFrames++
+            // After 20 frames of silence (~0.5s), stop speaking
+            if (silenceFrames > 20) {
+              isSpeaking = false
+              console.log('🔇 Stopped speaking - sending audio end')
+              // Send empty audio to signal end of speech
+              ws.send(JSON.stringify({
+                type: 'user_audio_chunk',
+                audio: ''
+              }))
+            }
           }
           
-          // Convert PCM to base64
-          const bytes = new Uint8Array(pcmData.buffer)
-          const base64Audio = btoa(String.fromCharCode.apply(null, bytes))
-          
-          // Send as JSON message per ElevenLabs WebSocket API spec
-          ws.send(JSON.stringify({
-            type: 'user_audio_chunk',
-            audio: base64Audio
-          }))
+          // Only send audio when speaking
+          if (isSpeaking || !isSilent) {
+            // Convert float32 audio to 16-bit PCM
+            const pcmData = new Int16Array(audioData.length)
+            for (let i = 0; i < audioData.length; i++) {
+              const s = Math.max(-1, Math.min(1, audioData[i]))
+              pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7FFF
+            }
+            
+            // Convert PCM to base64
+            const bytes = new Uint8Array(pcmData.buffer)
+            const base64Audio = btoa(String.fromCharCode.apply(null, bytes))
+            
+            // Send as JSON message per ElevenLabs WebSocket API spec
+            ws.send(JSON.stringify({
+              type: 'user_audio_chunk',
+              audio: base64Audio
+            }))
+          }
         }
       }
     } catch (err) {
