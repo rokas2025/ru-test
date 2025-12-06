@@ -43,3 +43,16 @@ elevenlabs-convai [role="contentinfo"] {
   display: none !important;
 }
 
+/* Cover the branding area at bottom of widget with a colored overlay */
+elevenlabs-convai::after {
+  content: '';
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 300px;
+  height: 40px;
+  background: #764ba2;
+  z-index: 999999;
+  pointer-events: none;
+}
+
