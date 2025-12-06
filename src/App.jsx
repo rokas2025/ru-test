@@ -54,7 +54,16 @@ function App() {
         console.log('Message from agent:', event.data)
         try {
           const data = JSON.parse(event.data)
-          handleAgentMessage(data)
+          
+          // Respond to ping events to keep connection alive
+          if (data.type === 'ping') {
+            ws.send(JSON.stringify({
+              type: 'pong',
+              event_id: data.ping_event?.event_id
+            }))
+          }
+          
+          handleAgentMessage(data, ws)
         } catch (err) {
           console.error('Error parsing message:', err)
         }
@@ -119,17 +128,18 @@ function App() {
     }
   }
 
-  const handleAgentMessage = (data) => {
+  const handleAgentMessage = (data, ws) => {
     // Handle different message types from agent per ElevenLabs WebSocket API
     console.log('Agent message type:', data.type)
     
-    if (data.type === 'agent_audio_chunk' || data.type === 'audio') {
-      // Play audio response
-      if (data.audio) {
-        playAudioResponse(data.audio)
-      }
-    } else if (data.type === 'agent_response' || data.type === 'transcript') {
-      console.log('Agent transcript:', data.text || data.message)
+    if (data.type === 'audio' && data.audio_event) {
+      // Play audio response from audio_event
+      playAudioResponse(data.audio_event.audio_base_64)
+    } else if (data.type === 'agent_response') {
+      console.log('Agent said:', data.agent_response_event?.agent_response)
+    } else if (data.type === 'agent_chat_response_part') {
+      const text = data.text_response_part?.text
+      if (text) console.log('Agent text:', text)
     } else if (data.type === 'conversation_initiation_metadata') {
       console.log('Conversation started:', data.conversation_initiation_metadata_event)
     }
@@ -144,10 +154,33 @@ function App() {
         bytes[i] = binaryString.charCodeAt(i)
       }
       
-      // TODO: Implement proper audio playback with Web Audio API
-      console.log('Received audio chunk:', bytes.length, 'bytes')
+      console.log('Playing audio chunk:', bytes.length, 'bytes')
+      
+      // Play PCM audio (16-bit, 16kHz mono)
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)()
+      }
+      
+      const audioContext = audioContextRef.current
+      const int16Array = new Int16Array(bytes.buffer)
+      const float32Array = new Float32Array(int16Array.length)
+      
+      // Convert 16-bit PCM to float32
+      for (let i = 0; i < int16Array.length; i++) {
+        float32Array[i] = int16Array[i] / 32768.0
+      }
+      
+      // Create audio buffer and play
+      const audioBuffer = audioContext.createBuffer(1, float32Array.length, 16000)
+      audioBuffer.getChannelData(0).set(float32Array)
+      
+      const source = audioContext.createBufferSource()
+      source.buffer = audioBuffer
+      source.connect(audioContext.destination)
+      source.start()
+      
     } catch (err) {
-      console.error('Error decoding audio:', err)
+      console.error('Error playing audio:', err)
     }
   }
 
