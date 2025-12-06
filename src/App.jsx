@@ -7,6 +7,9 @@ function App() {
   const [error, setError] = useState('')
 
   const conversation = useConversation({
+    config: {
+      serverUrl: 'wss://api.eu.elevenlabs.io',
+    },
     onConnect: () => {
       setStatus('🎉 Connected to agent!')
       setError('')
@@ -28,12 +31,14 @@ function App() {
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      setStatus('🚀 Starting conversation...')
+      setStatus('🚀 Starting conversation with EU server...')
 
       // Start session with EU residency and your agent ID
       await conversation.startSession({
         agentId: 'agent_5601kbte4hqgfy2vat22eerajvts',
-        serverLocation: 'eu-residency',
+        config: {
+          serverUrl: 'wss://api.eu.elevenlabs.io',
+        },
       })
 
       setStatus('✅ Connected! You can speak now...')
