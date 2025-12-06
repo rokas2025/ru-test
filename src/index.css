@@ -21,3 +21,12 @@ body {
   padding: 20px;
 }
 
+/* Aggressively hide ElevenLabs branding */
+[class*="powered" i],
+[id*="powered" i],
+[class*="elevenlabs" i]:not(elevenlabs-convai),
+[id*="branding" i] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
