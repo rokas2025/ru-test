@@ -51,7 +51,8 @@ elevenlabs-convai::after {
   right: 0;
   width: 300px;
   height: 40px;
-  background: #764ba2;
+  /* Match the gradient background - bottom right is the purple end */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   z-index: 999999;
   pointer-events: none;
 }
