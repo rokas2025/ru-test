@@ -9,7 +9,7 @@ body {
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #f5f5f5;
   min-height: 100vh;
 }
 
@@ -51,8 +51,8 @@ elevenlabs-convai::after {
   right: 0;
   width: 300px;
   height: 40px;
-  /* Match the gradient background - bottom right is the purple end */
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* Match the solid background */
+  background: #f5f5f5;
   z-index: 999999;
   pointer-events: none;
 }
