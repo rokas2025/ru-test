@@ -7,6 +7,9 @@ function App() {
   const [error, setError] = useState('')
 
   const conversation = useConversation({
+    config: {
+      baseUrl: 'https://api.eu.residency.elevenlabs.io',
+    },
     onConnect: () => {
       setStatus('🎉 Connected to agent!')
       setError('')
