@@ -7,9 +7,7 @@ function App() {
   const [error, setError] = useState('')
 
   const conversation = useConversation({
-    config: {
-      baseUrl: 'https://api.eu.residency.elevenlabs.io',
-    },
+    baseUrl: 'https://api.eu.residency.elevenlabs.io',
     onConnect: () => {
       setStatus('🎉 Connected to agent!')
       setError('')
@@ -34,37 +32,20 @@ function App() {
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      setStatus('🚀 Getting signed URL from EU server...')
+      setStatus('🚀 Connecting to EU agent...')
 
-      // Get signed URL from EU endpoint
+      // Get API key from environment
       const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY
       if (!apiKey) {
-        throw new Error('API key not found. Please set VITE_ELEVENLABS_API_KEY in Vercel environment variables.')
+        throw new Error('API key not found. Please set VITE_ELEVENLABS_API_KEY in environment variables.')
       }
 
-      const response = await fetch('https://api.eu.residency.elevenlabs.io/v1/convai/conversation/get_signed_url', {
-        method: 'POST',
-        headers: {
-          'xi-api-key': apiKey,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          agent_id: 'agent_5601kbte4hqgfy2vat22eerajvts',
-        }),
-      })
+      console.log('Connecting to EU endpoint with agent:', 'agent_5601kbte4hqgfy2vat22eerajvts')
 
-      if (!response.ok) {
-        throw new Error(`Failed to get signed URL: ${response.statusText}`)
-      }
-
-      const { signed_url } = await response.json()
-      console.log('Got signed URL for EU agent:', signed_url)
-
-      setStatus('🚀 Connecting to agent...')
-
-      // Start session with signed URL
+      // Start session with EU agent - pass apiKey directly
       await conversation.startSession({
-        signedUrl: signed_url,
+        agentId: 'agent_5601kbte4hqgfy2vat22eerajvts',
+        apiKey: apiKey,
       })
 
       setStatus('✅ Connected! You can speak now...')
