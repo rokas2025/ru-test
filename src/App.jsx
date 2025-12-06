@@ -34,12 +34,37 @@ function App() {
       // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      setStatus('🚀 Connecting to EU server...')
+      setStatus('🚀 Getting signed URL from EU server...')
 
-      // Start session with EU residency configuration
+      // Get signed URL from EU endpoint
+      const apiKey = import.meta.env.VITE_ELEVENLABS_API_KEY
+      if (!apiKey) {
+        throw new Error('API key not found. Please set VITE_ELEVENLABS_API_KEY in Vercel environment variables.')
+      }
+
+      const response = await fetch('https://api.eu.residency.elevenlabs.io/v1/convai/conversation/get_signed_url', {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          agent_id: 'agent_5601kbte4hqgfy2vat22eerajvts',
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to get signed URL: ${response.statusText}`)
+      }
+
+      const { signed_url } = await response.json()
+      console.log('Got signed URL for EU agent:', signed_url)
+
+      setStatus('🚀 Connecting to agent...')
+
+      // Start session with signed URL
       await conversation.startSession({
-        agentId: 'agent_5601kbte4hqgfy2vat22eerajvts',
-        serverLocation: 'eu-residency',
+        signedUrl: signed_url,
       })
 
       setStatus('✅ Connected! You can speak now...')
