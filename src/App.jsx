@@ -103,7 +103,15 @@ function App() {
           for (let i = 0; i < audioData.length; i++) {
             pcmData[i] = Math.max(-32768, Math.min(32767, audioData[i] * 32768))
           }
-          ws.send(pcmData.buffer)
+          
+          // Convert PCM to base64
+          const base64Audio = btoa(String.fromCharCode(...new Uint8Array(pcmData.buffer)))
+          
+          // Send as JSON message per ElevenLabs WebSocket API spec
+          ws.send(JSON.stringify({
+            type: 'user_audio_chunk',
+            audio: base64Audio
+          }))
         }
       }
     } catch (err) {
@@ -112,18 +120,35 @@ function App() {
   }
 
   const handleAgentMessage = (data) => {
-    // Handle different message types from agent
-    if (data.type === 'audio') {
+    // Handle different message types from agent per ElevenLabs WebSocket API
+    console.log('Agent message type:', data.type)
+    
+    if (data.type === 'agent_audio_chunk' || data.type === 'audio') {
       // Play audio response
-      playAudioResponse(data.audio)
-    } else if (data.type === 'transcript') {
-      console.log('Agent transcript:', data.text)
+      if (data.audio) {
+        playAudioResponse(data.audio)
+      }
+    } else if (data.type === 'agent_response' || data.type === 'transcript') {
+      console.log('Agent transcript:', data.text || data.message)
+    } else if (data.type === 'conversation_initiation_metadata') {
+      console.log('Conversation started:', data.conversation_initiation_metadata_event)
     }
   }
 
-  const playAudioResponse = (audioData) => {
-    // Implement audio playback
-    console.log('Playing audio response')
+  const playAudioResponse = (base64Audio) => {
+    // Decode base64 audio and play it
+    try {
+      const binaryString = atob(base64Audio)
+      const bytes = new Uint8Array(binaryString.length)
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i)
+      }
+      
+      // TODO: Implement proper audio playback with Web Audio API
+      console.log('Received audio chunk:', bytes.length, 'bytes')
+    } catch (err) {
+      console.error('Error decoding audio:', err)
+    }
   }
 
   const stopConversation = () => {
